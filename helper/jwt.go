@@ -5,49 +5,82 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/jamaalul/proyek1pbl/app/model"
 )
 
-// JWTClaims merepresentasikan payload data di dalam JWT token
-type JWTClaims struct {
-	UserID   int    `json:"user_id"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
+var (
+	ErrInvalidToken = errors.New("token tidak valid")
+	ErrExpiredToken = errors.New("token sudah kedaluwarsa")
+)
+
+type jwtClaims struct {
+	UserID int    `json:"user_id"`
+	Email  string `json:"email"`
+	Role   string `json:"role"`
 	jwt.RegisteredClaims
 }
 
-// GenerateToken membuat access token JWT baru
-func GenerateToken(userID int, username, role, secret string, expHours int) (string, error) {
-	claims := JWTClaims{
-		UserID:   userID,
-		Username: username,
-		Role:     role,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expHours) * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
+type JWTManager struct {
+	secret    []byte
+	issuer    string
+	accessTTL time.Duration
 }
 
-// ValidateToken memvalidasi dan mem-parse access token JWT
-func ValidateToken(tokenString, secret string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (any, error) {
+func NewJWTManager(secret, issuer string, accessTTL time.Duration) *JWTManager {
+	return &JWTManager{
+		secret:    []byte(secret),
+		issuer:    issuer,
+		accessTTL: accessTTL,
+	}
+}
+
+func (m *JWTManager) AccessTTL() time.Duration {
+	return m.accessTTL
+}
+
+func (m *JWTManager) ExpiresIn() int {
+	return int(m.accessTTL.Seconds())
+}
+
+func (m *JWTManager) GenerateAccess(u model.User) (string, error) {
+	now := time.Now()
+	claims := jwtClaims{
+		UserID: u.ID,
+		Email:  u.Email,
+		Role:   string(u.Role),
+		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    m.issuer,
+			IssuedAt:  jwt.NewNumericDate(now),
+			ExpiresAt: jwt.NewNumericDate(now.Add(m.accessTTL)),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(m.secret)
+}
+
+func (m *JWTManager) Parse(tokenString string) (model.AuthUser, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("metode signing token tidak valid")
+			return nil, ErrInvalidToken
 		}
-		return []byte(secret), nil
+		return m.secret, nil
 	})
 
 	if err != nil {
-		return nil, err
+		if errors.Is(err, jwt.ErrTokenExpired) {
+			return model.AuthUser{}, ErrExpiredToken
+		}
+		return model.AuthUser{}, ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(*JWTClaims)
+	claims, ok := token.Claims.(*jwtClaims)
 	if !ok || !token.Valid {
-		return nil, errors.New("token tidak valid atau telah kedaluwarsa")
+		return model.AuthUser{}, ErrInvalidToken
 	}
 
-	return claims, nil
+	return model.AuthUser{
+		UserID: claims.UserID,
+		Email:  claims.Email,
+		Role:   claims.Role,
+	}, nil
 }
