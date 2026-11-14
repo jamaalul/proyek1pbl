@@ -3,57 +3,35 @@ package route
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jamaalul/proyek1pbl/app/service"
 	"github.com/jamaalul/proyek1pbl/helper"
-	"github.com/jamaalul/proyek1pbl/middleware"
 )
 
-// Dependencies menyimpan daftar service yang akan dihubungkan ke route
 type Dependencies struct {
 	Pool        *pgxpool.Pool
-	AuthService *service.AuthService
+	JWT         *helper.JWTManager
+	Permissions *helper.PermissionSet
 }
 
-// Register mendaftarkan seluruh endpoint API ke router Fiber
 func Register(app *fiber.App, deps Dependencies) {
-	// Root Endpoint
 	app.Get("/", func(c *fiber.Ctx) error {
-		return helper.Success(c, fiber.StatusOK, "Selamat datang di MediCare Backend API", fiber.Map{
-			"service": "MediCare API Service",
+		return helper.Success(c, fiber.StatusOK, "SIAKAD Mini API Boilerplate berjalan", fiber.Map{
 			"version": "1.0.0",
-			"docs":    "/api/v1/health",
+			"health":  "/health",
 		})
 	})
 
-	api := app.Group("/api/v1")
-
-	// Health Check Endpoint untuk kebutuhan pengujian & demo
-	api.Get("/health", func(c *fiber.Ctx) error {
-		dbStatus := "connected"
+	app.Get("/health", func(c *fiber.Ctx) error {
+		dbStatus := "ok"
 		if deps.Pool == nil {
-			dbStatus = "memory-fallback (database offline)"
+			dbStatus = "fallback (offline)"
 		} else {
 			if err := deps.Pool.Ping(c.Context()); err != nil {
-				dbStatus = "disconnected: " + err.Error()
+				dbStatus = "error: " + err.Error()
 			}
 		}
 
-		return helper.Success(c, fiber.StatusOK, "Sistem MediCare berjalan dengan baik", fiber.Map{
-			"status":   "UP",
-			"database": dbStatus,
-			"modules": fiber.Map{
-				"core_auth":   "ready",
-				"clinic":      "boilerplate ready",
-				"transaction": "boilerplate ready",
-			},
+		return helper.Success(c, fiber.StatusOK, "server dan basis data berjalan normal", fiber.Map{
+			"postgres": dbStatus,
 		})
 	})
-
-	// Modul Autentikasi & Akun Pengguna
-	if deps.AuthService != nil {
-		auth := api.Group("/auth")
-		auth.Post("/register", deps.AuthService.Register)
-		auth.Post("/login", deps.AuthService.Login)
-		auth.Get("/me", middleware.Protected(), deps.AuthService.Profile)
-	}
 }
