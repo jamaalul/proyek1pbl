@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	"github.com/jamaalul/proyek1pbl/app/repository"
 	"github.com/jamaalul/proyek1pbl/config"
 	"github.com/jamaalul/proyek1pbl/database"
@@ -56,10 +55,8 @@ func main() {
 	}
 	permissions := helper.NewPermissionSet(permMap)
 
-	// 4. Inisialisasi Fiber App
-	app := fiber.New(fiber.Config{
-		AppName: "SIAKAD Mini API Boilerplate v1.0",
-	})
+	// 4. Inisialisasi Fiber App dengan Centralized Error Handler & Global Middlewares
+	app := config.NewApp()
 
 	// 5. Daftarkan Endpoint Router
 	route.Register(app, route.Dependencies{
