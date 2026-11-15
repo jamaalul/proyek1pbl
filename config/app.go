@@ -39,6 +39,9 @@ func newErrorHandler() fiber.ErrorHandler {
 			} else {
 				// Log error internal tak terduga
 				log.Printf("[SERVER_ERROR] %s %s: %v\n", c.Method(), c.Path(), err)
+				if GetEnv("APP_ENV", "development") != "production" {
+					message = err.Error()
+				}
 			}
 		}
 
