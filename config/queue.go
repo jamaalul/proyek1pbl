@@ -31,6 +31,9 @@ func NewWorkerServer(logger *slog.Logger) *asynq.Server {
 }
 
 func newAsynqLogger(logger *slog.Logger) asynq.Logger {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	return &asynqSlogLogger{logger: logger}
 }
 
