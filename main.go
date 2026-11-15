@@ -43,7 +43,14 @@ func main() {
 	}
 
 	// 3. Setup JWT Manager & Autorisasi RBAC (Person 3)
-	jwtSecret := config.GetEnv("JWT_SECRET", "supersecretjwtkey_min32characters_2026")
+	jwtSecret := config.GetEnv("JWT_SECRET", "")
+	if jwtSecret == "" {
+		log.Println("[PERINGATAN] JWT_SECRET tidak diatur di environment, menggunakan default development")
+		jwtSecret = "supersecretjwtkey_min32characters_2026"
+	}
+	if len(jwtSecret) < 32 {
+		log.Printf("[PERINGATAN] Panjang JWT_SECRET (%d karakter) kurang dari rekomendasi 32 karakter\n", len(jwtSecret))
+	}
 	jwtIssuer := config.GetEnv("JWT_ISSUER", "siakad-mini")
 	accessTTL := time.Duration(config.GetEnvInt("JWT_TTL_MINUTES", 60)) * time.Minute
 	jwtManager := helper.NewJWTManager(jwtSecret, jwtIssuer, accessTTL)

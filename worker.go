@@ -14,9 +14,8 @@ import (
 func runWorker() {
 	config.LoadEnv()
 
-	redisAddr := config.GetEnv("REDIS_ADDR", "localhost:6379")
 	srv := asynq.NewServer(
-		asynq.RedisClientOpt{Addr: redisAddr},
+		config.RedisOpt(),
 		asynq.Config{
 			Concurrency: 10,
 			Queues: map[string]int{
