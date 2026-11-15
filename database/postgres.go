@@ -6,6 +6,8 @@ import (
 	"math"
 	"net"
 	"net/url"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,7 +34,14 @@ func NewPool(ctx context.Context) (*pgxpool.Pool, error) {
 	}
 
 	cfg.MinConns = 2
-	maxConns := config.GetEnvInt("DB_MAX_CONNS", 10)
+	maxConns := 10
+	if value, ok := os.LookupEnv("DB_MAX_CONNS"); ok && value != "" {
+		parsed, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, fmt.Errorf("DB_MAX_CONNS harus berupa bilangan bulat")
+		}
+		maxConns = parsed
+	}
 	if maxConns < int(cfg.MinConns) || maxConns > math.MaxInt32 {
 		return nil, fmt.Errorf("DB_MAX_CONNS harus antara %d dan %d", cfg.MinConns, math.MaxInt32)
 	}
