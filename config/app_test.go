@@ -2,6 +2,7 @@ package config_test
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -30,6 +31,10 @@ func TestApp_CentralizedErrorHandler(t *testing.T) {
 
 	app.Get("/trigger-panic", func(c *fiber.Ctx) error {
 		panic("simulasi crash server")
+	})
+
+	app.Get("/trigger-generic", func(c *fiber.Ctx) error {
+		return errors.New("database connection refused: port 5432 unreachable")
 	})
 
 	t.Run("HandleAppErrorNotFound", func(t *testing.T) {
@@ -78,6 +83,44 @@ func TestApp_CentralizedErrorHandler(t *testing.T) {
 		}
 		if resp.StatusCode != http.StatusInternalServerError {
 			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusInternalServerError)
+		}
+	})
+
+	t.Run("HandleGenericErrorDevelopment", func(t *testing.T) {
+		t.Setenv("APP_ENV", "development")
+		req := httptest.NewRequest(http.MethodGet, "/trigger-generic", nil)
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusInternalServerError {
+			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusInternalServerError)
+		}
+
+		var errRes model.ErrorResponse
+		body, _ := io.ReadAll(resp.Body)
+		_ = json.Unmarshal(body, &errRes)
+		if errRes.Message != "database connection refused: port 5432 unreachable" {
+			t.Errorf("development generic error message = %s, want err.Error()", errRes.Message)
+		}
+	})
+
+	t.Run("HandleGenericErrorProduction", func(t *testing.T) {
+		t.Setenv("APP_ENV", "production")
+		req := httptest.NewRequest(http.MethodGet, "/trigger-generic", nil)
+		resp, err := app.Test(req)
+		if err != nil {
+			t.Fatalf("request failed: %v", err)
+		}
+		if resp.StatusCode != http.StatusInternalServerError {
+			t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusInternalServerError)
+		}
+
+		var errRes model.ErrorResponse
+		body, _ := io.ReadAll(resp.Body)
+		_ = json.Unmarshal(body, &errRes)
+		if errRes.Message != "terjadi kesalahan pada server" {
+			t.Errorf("production generic error message = %s, want 'terjadi kesalahan pada server'", errRes.Message)
 		}
 	})
 
