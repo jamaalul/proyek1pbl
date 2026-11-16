@@ -14,7 +14,7 @@ type Dependencies struct {
 
 func Register(app *fiber.App, deps Dependencies) {
 	app.Get("/", func(c *fiber.Ctx) error {
-		return helper.Success(c, fiber.StatusOK, "SIAKAD Mini API Boilerplate berjalan", fiber.Map{
+		return helper.Success(c, fiber.StatusOK, "Boilerplate berjalan", fiber.Map{
 			"version": "1.0.0",
 			"health":  "/health",
 		})
