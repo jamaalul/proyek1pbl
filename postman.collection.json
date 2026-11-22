@@ -1,0 +1,4097 @@
+{
+    "info": {
+        "name": "4 Sehat 5 Haji - API Tests",
+        "description": "End-to-end API tests for the 4 Sehat 5 Haji clinic backend (see PRD). Run the folders in order with the Collection Runner or `newman run`. Requires the Postman environment '4 Sehat 5 Haji - Local' and a seeded admin account.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "00 - Setup & Health",
+            "item": [
+                {
+                    "name": "Health check",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const rid = Date.now().toString(36);",
+                                    "pm.environment.set(\"run_id\", rid);",
+                                    "const d = new Date(); d.setDate(d.getDate() + 7);",
+                                    "pm.environment.set(\"practice_date\", d.toISOString().slice(0,10));",
+                                    "pm.environment.set(\"past_date\", \"2020-01-01\");",
+                                    "[\"token_admin\",\"token_doctor\",\"token_a\",\"token_b\",\"token_c\",\"polyclinic_id\",\"doctor_id\",\"doctor_user_id\",\"schedule_id\",\"appt_a_id\",\"appt_b_id\",\"appt_c_id\",\"record_id\"].forEach(k => pm.environment.unset(k));"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Root",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": []
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "01 - Auth & Profile",
+            "item": [
+                {
+                    "name": "Register patient A",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Patient A {{run_id}}\",\n  \"email\": \"patient_a_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"patient_a_id present\").to.not.be.undefined; pm.environment.set(\"patient_a_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register patient B",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Patient B {{run_id}}\",\n  \"email\": \"patient_b_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"patient_b_id present\").to.not.be.undefined; pm.environment.set(\"patient_b_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register patient C",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Patient C {{run_id}}\",\n  \"email\": \"patient_c_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"patient_c_id present\").to.not.be.undefined; pm.environment.set(\"patient_c_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register - role in body is ignored",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Sneaky {{run_id}}\",\n  \"email\": \"sneaky_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\",\n  \"role\": \"admin\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"role forced to pasien\", () => pm.expect(pm.response.json().data.role).to.eql(\"pasien\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register - duplicate email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Dup\",\n  \"email\": \"patient_a_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code EMAIL_TAKEN\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"EMAIL_TAKEN\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register - short password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Short\",\n  \"email\": \"short_{{run_id}}@test.local\",\n  \"password\": \"123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Register - missing fields",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/register",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "register"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login admin (seeded)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_admin present\").to.not.be.undefined; pm.environment.set(\"token_admin\", x); }",
+                                    "pm.test(\"role admin\", () => pm.expect(pm.response.json().data.user.role).to.eql(\"admin\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login patient A",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_a_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_a present\").to.not.be.undefined; pm.environment.set(\"token_a\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login patient B",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_b_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_b present\").to.not.be.undefined; pm.environment.set(\"token_b\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login patient C",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_c_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_c present\").to.not.be.undefined; pm.environment.set(\"token_c\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login - wrong password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_a_{{run_id}}@test.local\",\n  \"password\": \"WrongPass!999\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_CREDENTIALS\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_CREDENTIALS\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login - unknown email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"nobody_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_CREDENTIALS\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_CREDENTIALS\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GET /me - no token",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GET /me - invalid token",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{invalid_token_value}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "prerequest",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.environment.set(\"invalid_token_value\",\"not.a.jwt\");"
+                                ]
+                            }
+                        },
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "GET /me (patient A)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"no password hash leaked\", () => pm.expect(pm.response.text()).to.not.include(\"password_hash\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "PUT /me (patient A)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Patient A Updated {{run_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"name updated\", () => pm.expect(pm.response.json().data.full_name).to.include(\"Updated\"));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "02 - Clinic Master",
+            "item": [
+                {
+                    "name": "Patient cannot create polyclinic",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/polyclinics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "polyclinics"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Forbidden {{run_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin creates polyclinic",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/polyclinics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "polyclinics"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Poli Umum {{run_id}}\",\n  \"description\": \"General practice\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"polyclinic_id present\").to.not.be.undefined; pm.environment.set(\"polyclinic_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin creates polyclinic - duplicate name",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/polyclinics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "polyclinics"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Poli Umum {{run_id}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin creates doctor (user + profile)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/doctors",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "doctors"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Dr. House {{run_id}}\",\n  \"email\": \"doctor_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\",\n  \"polyclinic_id\": {{polyclinic_id}},\n  \"specialization\": \"General\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"doctor_id present\").to.not.be.undefined; pm.environment.set(\"doctor_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin creates doctor - duplicate email",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/doctors",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "doctors"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"Dr. Dup\",\n  \"email\": \"doctor_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\",\n  \"polyclinic_id\": {{polyclinic_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code EMAIL_TAKEN\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"EMAIL_TAKEN\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login doctor",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"doctor_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_doctor present\").to.not.be.undefined; pm.environment.set(\"token_doctor\", x); }",
+                                    "pm.test(\"role dokter\", () => pm.expect(pm.response.json().data.user.role).to.eql(\"dokter\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List polyclinics (patient)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/polyclinics",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "polyclinics"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List doctors by polyclinic",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/doctors?polyclinic_id={{polyclinic_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "doctors"
+                            ],
+                            "query": [
+                                {
+                                    "key": "polyclinic_id",
+                                    "value": "{{polyclinic_id}}"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"contains created doctor\", () => pm.expect(pm.response.text()).to.include(\"Dr. House\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient cannot create schedule",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{practice_date}}\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"12:00\",\n  \"quota\": 2\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin creates schedule (quota 2)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{practice_date}}\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"12:00\",\n  \"quota\": 2\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"schedule_id present\").to.not.be.undefined; pm.environment.set(\"schedule_id\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Schedule - overlapping",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{practice_date}}\",\n  \"start_time\": \"11:00\",\n  \"end_time\": \"13:00\",\n  \"quota\": 5\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code SCHEDULE_OVERLAP\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"SCHEDULE_OVERLAP\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Schedule - past date",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{past_date}}\",\n  \"start_time\": \"09:00\",\n  \"end_time\": \"12:00\",\n  \"quota\": 5\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Schedule - end before start",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{practice_date}}\",\n  \"start_time\": \"15:00\",\n  \"end_time\": \"14:00\",\n  \"quota\": 5\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Schedule - quota 0",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"doctor_id\": {{doctor_id}},\n  \"practice_date\": \"{{practice_date}}\",\n  \"start_time\": \"15:00\",\n  \"end_time\": \"17:00\",\n  \"quota\": 0\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List schedules (patient) - remaining quota 2",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules?doctor_id={{doctor_id}}&date={{practice_date}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ],
+                            "query": [
+                                {
+                                    "key": "doctor_id",
+                                    "value": "{{doctor_id}}"
+                                },
+                                {
+                                    "key": "date",
+                                    "value": "{{practice_date}}"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"remaining_quota = 2\", () => { const s = pm.response.json().data.find(x => x.id == pm.environment.get(\"schedule_id\")); pm.expect(s.remaining_quota).to.eql(2); });"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "03 - Appointments & Queue Status",
+            "item": [
+                {
+                    "name": "Admin cannot book appointment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Book - schedule not found",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": 99999999\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A books (queue 1)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"appt_a_id present\").to.not.be.undefined; pm.environment.set(\"appt_a_id\", x); }",
+                                    "pm.test(\"queue_number = 1\", () => pm.expect(pm.response.json().data.queue_number).to.eql(1));",
+                                    "pm.test(\"status booked\", () => pm.expect(pm.response.json().data.status).to.eql(\"booked\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A books again - duplicate",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code DUPLICATE_APPOINTMENT\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"DUPLICATE_APPOINTMENT\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient B books (queue 2)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_b}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"appt_b_id present\").to.not.be.undefined; pm.environment.set(\"appt_b_id\", x); }",
+                                    "pm.test(\"queue_number = 2\", () => pm.expect(pm.response.json().data.queue_number).to.eql(2));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient C books - quota full",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_c}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code QUOTA_FULL\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"QUOTA_FULL\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin lowers quota below booked",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules/{{schedule_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules",
+                                "{{schedule_id}}"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"quota\": 1\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code QUOTA_BELOW_BOOKED\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"QUOTA_BELOW_BOOKED\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A cannot cancel B's appointment",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_b_id}}/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_b_id}}",
+                                "cancel"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"403 or 404\", () => pm.expect([403,404]).to.include(pm.response.code));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient B cancels own appointment",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_b_id}}/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_b_id}}",
+                                "cancel"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_b}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"status cancelled\", () => pm.expect(pm.response.json().data.status).to.eql(\"cancelled\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient C books after cancel (queue 3, number not reused)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"schedule_id\": {{schedule_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_c}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"appt_c_id present\").to.not.be.undefined; pm.environment.set(\"appt_c_id\", x); }",
+                                    "pm.test(\"queue_number = 3\", () => pm.expect(pm.response.json().data.queue_number).to.eql(3));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Remaining quota is 0",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/schedules?doctor_id={{doctor_id}}&date={{practice_date}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "schedules"
+                            ],
+                            "query": [
+                                {
+                                    "key": "doctor_id",
+                                    "value": "{{doctor_id}}"
+                                },
+                                {
+                                    "key": "date",
+                                    "value": "{{practice_date}}"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"remaining_quota = 0\", () => { const s = pm.response.json().data.find(x => x.id == pm.environment.get(\"schedule_id\")); pm.expect(s.remaining_quota).to.eql(0); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A lists own appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"only own appointments\", () => pm.response.json().data.forEach(x => pm.expect(String(x.patient_id || pm.environment.get(\"patient_a_id\"))).to.eql(String(pm.environment.get(\"patient_a_id\")))));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient cannot list all appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin lists all appointments",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments?schedule_id={{schedule_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments"
+                            ],
+                            "query": [
+                                {
+                                    "key": "schedule_id",
+                                    "value": "{{schedule_id}}"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"has 3 rows (incl. cancelled)\", () => pm.expect(pm.response.json().data.length).to.eql(3));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient cannot update status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"arrived\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: invalid status value",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"flying\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: booked -> completed is illegal",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"completed\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_STATUS_TRANSITION\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_STATUS_TRANSITION\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: A booked -> arrived",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"arrived\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"arrived\", () => pm.expect(pm.response.json().data.status).to.eql(\"arrived\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: arrived -> completed is illegal",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"completed\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_STATUS_TRANSITION\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_STATUS_TRANSITION\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A cannot cancel once arrived",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/cancel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "cancel"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_STATUS_TRANSITION\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_STATUS_TRANSITION\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: A arrived -> in_consultation",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_a_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_a_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"in_consultation\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin: C booked -> arrived",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/{{appt_c_id}}/status",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "{{appt_c_id}}",
+                                "status"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"status\": \"arrived\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "04 - Doctor Queue & Medical Records",
+            "item": [
+                {
+                    "name": "Patient cannot view doctor queue",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/doctor/queue",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "doctor",
+                                "queue"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor views queue for the practice date",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/doctor/queue?date={{practice_date}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "doctor",
+                                "queue"
+                            ],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "{{practice_date}}"
+                                }
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"ordered by queue_number\", () => { const q = pm.response.json().data.map(x => x.queue_number); pm.expect(q).to.eql([...q].sort((x,y)=>x-y)); });",
+                                    "pm.test(\"cancelled patient not listed as active\", () => pm.expect(pm.response.json().data.find(x => x.id == pm.environment.get(\"appt_b_id\") && x.status !== \"cancelled\")).to.be.undefined);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient cannot create medical record",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointment_id\": {{appt_a_id}},\n  \"diagnosis\": \"x\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin cannot create medical record",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointment_id\": {{appt_a_id}},\n  \"diagnosis\": \"x\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor: missing diagnosis",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointment_id\": {{appt_a_id}}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor creates record for A (+ prescriptions)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointment_id\": {{appt_a_id}},\n  \"complaint\": \"Fever 3 days\",\n  \"diagnosis\": \"Viral infection\",\n  \"notes\": \"Rest and hydration\",\n  \"prescriptions\": [\n    {\n      \"medication_name\": \"Paracetamol 500mg\",\n      \"dosage\": \"3x1\",\n      \"instructions\": \"After meals\"\n    }\n  ]\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.id; pm.expect(x, \"record_id present\").to.not.be.undefined; pm.environment.set(\"record_id\", x); }",
+                                    "pm.test(\"prescription stored\", () => pm.expect(pm.response.text()).to.include(\"Paracetamol\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor creates record again - duplicate",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"appointment_id\": {{appt_a_id}},\n  \"diagnosis\": \"dup\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Appointment A is now completed",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/appointments/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "appointments",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"A completed\", () => { const x = pm.response.json().data.find(i => i.id == pm.environment.get(\"appt_a_id\")); pm.expect(x.status).to.eql(\"completed\"); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor adds prescription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}/prescriptions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}",
+                                "prescriptions"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"medication_name\": \"Vitamin C\",\n  \"dosage\": \"1x1\",\n  \"instructions\": \"Morning\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient cannot add prescription",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}/prescriptions",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}",
+                                "prescriptions"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"medication_name\": \"Hack\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A reads own record",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"has 2 prescriptions\", () => pm.expect(pm.response.json().data.prescriptions.length).to.eql(2));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient A lists own records",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_a}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "pm.test(\"contains record\", () => pm.expect(pm.response.json().data.some(r => r.id == pm.environment.get(\"record_id\"))).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient B cannot read A's record (404)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_b}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Patient C cannot read A's record (404)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_c}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Admin cannot read record (403)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_admin}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 403\", () => pm.response.to.have.status(403));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Doctor reads own patient's record",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/{{record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "{{record_id}}"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Record not found",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/medical-records/99999999",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "medical-records",
+                                "99999999"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_doctor}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "05 - Password & Logout",
+            "item": [
+                {
+                    "name": "Change password - wrong current",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me/password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me",
+                                "password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"current_password\": \"Wrong!123\",\n  \"new_password\": \"NewPassw0rd!456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_b}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 422\", () => pm.response.to.have.status(422));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Change password (patient B)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me/password",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me",
+                                "password"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"current_password\": \"Passw0rd!123\",\n  \"new_password\": \"NewPassw0rd!456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_b}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login B with old password fails",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_b_{{run_id}}@test.local\",\n  \"password\": \"Passw0rd!123\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));",
+                                    "pm.test(\"error code INVALID_CREDENTIALS\", () => pm.expect(JSON.stringify(pm.response.json().errors || [])).to.include(\"INVALID_CREDENTIALS\"));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login B with new password",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"patient_b_{{run_id}}@test.local\",\n  \"password\": \"NewPassw0rd!456\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));",
+                                    "{ const v = pm.response.json(); const x = v.data.token; pm.expect(x, \"token_b present\").to.not.be.undefined; pm.environment.set(\"token_b\", x); }"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Logout (patient C)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "auth",
+                                "logout"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_c}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
+                                    "pm.test(\"success=true\", () => pm.expect(pm.response.json().success).to.eql(true));"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Token is denylisted after logout",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "me"
+                            ]
+                        },
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{token_c}}",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status is 401\", () => pm.response.to.have.status(401));",
+                                    "pm.test(\"success=false\", () => pm.expect(pm.response.json().success).to.eql(false));"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "pm.test(\"Response time < 2000ms\", () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+            }
+        }
+    ]
+}
