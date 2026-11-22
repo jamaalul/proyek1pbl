@@ -11,8 +11,10 @@ import (
 )
 
 func NewApp() *fiber.App {
+	appName := GetEnv("APP_NAME", "4 Sehat 5 Haji")
+
 	app := fiber.New(fiber.Config{
-		AppName:      "SIAKAD Mini API Boilerplate v1.0",
+		AppName:      appName,
 		ErrorHandler: newErrorHandler(),
 	})
 
@@ -24,23 +26,29 @@ func newErrorHandler() fiber.ErrorHandler {
 	return func(c *fiber.Ctx, err error) error {
 		statusCode := fiber.StatusInternalServerError
 		message := "terjadi kesalahan pada server"
-		var errsMap map[string][]string
+		var errorsList []model.ErrorItem
 
 		var appErr *helper.AppError
 		if errors.As(err, &appErr) {
 			statusCode = appErr.Status
 			message = appErr.Message
-			errsMap = appErr.Errors
+			errorsList = appErr.Errors
 		} else {
 			var fiberErr *fiber.Error
 			if errors.As(err, &fiberErr) {
 				statusCode = fiberErr.Code
 				message = fiberErr.Message
+				errorsList = []model.ErrorItem{
+					{Code: "BAD_REQUEST", Message: fiberErr.Message},
+				}
 			} else {
 				// Log error internal tak terduga
 				log.Printf("[SERVER_ERROR] %s %s: %v\n", c.Method(), c.Path(), err)
 				if GetEnv("APP_ENV", "development") != "production" {
 					message = err.Error()
+				}
+				errorsList = []model.ErrorItem{
+					{Code: "INTERNAL", Message: message},
 				}
 			}
 		}
@@ -48,7 +56,7 @@ func newErrorHandler() fiber.ErrorHandler {
 		return c.Status(statusCode).JSON(model.ErrorResponse{
 			Success: false,
 			Message: message,
-			Errors:  errsMap,
+			Errors:  errorsList,
 		})
 	}
 }

@@ -40,8 +40,8 @@ func TestAppError_Constructors(t *testing.T) {
 		if valErr.Status != http.StatusUnprocessableEntity {
 			t.Errorf("Validation status = %d, want %d", valErr.Status, http.StatusUnprocessableEntity)
 		}
-		if valErr.Errors["email"][0] != "email tidak valid" {
-			t.Errorf("Validation errors map tidak sesuai: %+v", valErr.Errors)
+		if len(valErr.Errors) == 0 || valErr.Errors[0].Field != "email" || valErr.Errors[0].Message != "email tidak valid" {
+			t.Errorf("Validation errors list tidak sesuai: %+v", valErr.Errors)
 		}
 	})
 

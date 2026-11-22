@@ -5,40 +5,28 @@ import "time"
 type Role string
 
 const (
-	RoleAdmin     Role = "admin"
+	RolePasien Role = "pasien"
+	RoleDokter Role = "dokter"
+	RoleAdmin  Role = "admin"
+
+	// Legacy aliases if needed
 	RoleMahasiswa Role = "mahasiswa"
 )
 
 type User struct {
-	ID        int       `json:"id"`
-	Email     string    `json:"email"`
-	Password  string    `json:"-"`
-	Role      Role      `json:"role"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           int64     `json:"id"`
+	FullName     string    `json:"full_name"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"-"`
+	Role         Role      `json:"role"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
 }
 
 type AuthUser struct {
-	UserID int    `json:"user_id"`
+	UserID int64  `json:"user_id"`
 	Email  string `json:"email"`
 	Role   string `json:"role"`
-}
-
-type WebResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    any    `json:"data,omitempty"`
-	Meta    any    `json:"meta,omitempty"`
-}
-
-type Meta struct {
-	CurrentPage int `json:"current_page"`
-	PerPage     int `json:"per_page"`
-	Total       int `json:"total"`
-	LastPage    int `json:"last_page"`
-}
-
-type ErrorResponse struct {
-	Success bool                `json:"success"`
-	Message string              `json:"message"`
-	Errors  map[string][]string `json:"errors,omitempty"`
+	JTI    string `json:"jti,omitempty"`
 }

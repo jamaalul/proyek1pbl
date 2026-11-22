@@ -45,3 +45,25 @@ func HasAnyRole(userRole string, allowed ...string) bool {
 	}
 	return false
 }
+
+func DefaultClinicPermissions() map[string][]string {
+	return map[string][]string{
+		"pasien": {
+			"profile:read_self", "profile:update_self",
+			"clinic:read",
+			"appointment:create", "appointment:read_self", "appointment:cancel_self",
+			"medical_record:read",
+		},
+		"dokter": {
+			"profile:read_self", "profile:update_self",
+			"clinic:read",
+			"queue:read_doctor",
+			"medical_record:create", "medical_record:add_prescription", "medical_record:read",
+		},
+		"admin": {
+			"profile:read_self", "profile:update_self",
+			"clinic:read", "clinic:manage",
+			"appointment:read_all", "appointment:update_status",
+		},
+	}
+}

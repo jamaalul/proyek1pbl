@@ -2,9 +2,11 @@ package helper
 
 import (
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jamaalul/proyek1pbl/app/model"
 )
 
@@ -13,10 +15,11 @@ var (
 	ErrExpiredToken = errors.New("token sudah kedaluwarsa")
 )
 
-type jwtClaims struct {
-	UserID int    `json:"user_id"`
-	Email  string `json:"email"`
+type JWTClaims struct {
+	UserID int64  `json:"user_id,omitempty"`
 	Role   string `json:"role"`
+	Email  string `json:"email,omitempty"`
+	JTI    string `json:"jti,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -43,23 +46,70 @@ func (m *JWTManager) ExpiresIn() int {
 }
 
 func (m *JWTManager) GenerateAccess(u model.User) (string, error) {
+	tokenStr, _, _, err := m.GenerateAccessWithJTI(u)
+	return tokenStr, err
+}
+
+func (m *JWTManager) GenerateAccessWithJTI(u model.User) (string, time.Time, string, error) {
 	now := time.Now()
-	claims := jwtClaims{
+	expiresAt := now.Add(m.accessTTL)
+	jti := uuid.New().String()
+
+	claims := JWTClaims{
 		UserID: u.ID,
-		Email:  u.Email,
 		Role:   string(u.Role),
+		Email:  u.Email,
+		JTI:    jti,
 		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   strconv.FormatInt(u.ID, 10),
+			ID:        jti,
 			Issuer:    m.issuer,
 			IssuedAt:  jwt.NewNumericDate(now),
-			ExpiresAt: jwt.NewNumericDate(now.Add(m.accessTTL)),
+			ExpiresAt: jwt.NewNumericDate(expiresAt),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(m.secret)
+	tokenStr, err := token.SignedString(m.secret)
+	return tokenStr, expiresAt, jti, err
+}
+
+func (m *JWTManager) GenerateTokenFor(userID int64, email, role string) (string, error) {
+	u := model.User{
+		ID:    userID,
+		Email: email,
+		Role:  model.Role(role),
+	}
+	return m.GenerateAccess(u)
 }
 
 func (m *JWTManager) Parse(tokenString string) (model.AuthUser, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &jwtClaims{}, func(token *jwt.Token) (any, error) {
+	claims, err := m.ParseTokenClaims(tokenString)
+	if err != nil {
+		return model.AuthUser{}, err
+	}
+
+	userID := claims.UserID
+	if userID == 0 && claims.Subject != "" {
+		if id, parseErr := strconv.ParseInt(claims.Subject, 10, 64); parseErr == nil {
+			userID = id
+		}
+	}
+
+	jti := claims.JTI
+	if jti == "" {
+		jti = claims.ID
+	}
+
+	return model.AuthUser{
+		UserID: userID,
+		Email:  claims.Email,
+		Role:   claims.Role,
+		JTI:    jti,
+	}, nil
+}
+
+func (m *JWTManager) ParseTokenClaims(tokenString string) (*JWTClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &JWTClaims{}, func(token *jwt.Token) (any, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ErrInvalidToken
 		}
@@ -68,19 +118,15 @@ func (m *JWTManager) Parse(tokenString string) (model.AuthUser, error) {
 
 	if err != nil {
 		if errors.Is(err, jwt.ErrTokenExpired) {
-			return model.AuthUser{}, ErrExpiredToken
+			return nil, ErrExpiredToken
 		}
-		return model.AuthUser{}, ErrInvalidToken
+		return nil, ErrInvalidToken
 	}
 
-	claims, ok := token.Claims.(*jwtClaims)
+	claims, ok := token.Claims.(*JWTClaims)
 	if !ok || !token.Valid {
-		return model.AuthUser{}, ErrInvalidToken
+		return nil, ErrInvalidToken
 	}
 
-	return model.AuthUser{
-		UserID: claims.UserID,
-		Email:  claims.Email,
-		Role:   claims.Role,
-	}, nil
+	return claims, nil
 }

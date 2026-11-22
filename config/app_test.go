@@ -70,8 +70,8 @@ func TestApp_CentralizedErrorHandler(t *testing.T) {
 		var errRes model.ErrorResponse
 		body, _ := io.ReadAll(resp.Body)
 		_ = json.Unmarshal(body, &errRes)
-		if errRes.Errors["email"][0] != "email wajib diisi" {
-			t.Errorf("Validation errors map tidak sesuai: %+v", errRes.Errors)
+		if len(errRes.Errors) == 0 || errRes.Errors[0].Field != "email" || errRes.Errors[0].Message != "email wajib diisi" {
+			t.Errorf("Validation errors list tidak sesuai: %+v", errRes.Errors)
 		}
 	})
 
