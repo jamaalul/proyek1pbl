@@ -3,13 +3,15 @@ package route
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jamaalul/proyek1pbl/app/service"
 	"github.com/jamaalul/proyek1pbl/helper"
 )
 
 type Dependencies struct {
-	Pool        *pgxpool.Pool
-	JWT         *helper.JWTManager
-	Permissions *helper.PermissionSet
+	Pool          *pgxpool.Pool
+	JWT           *helper.JWTManager
+	Permissions   *helper.PermissionSet
+	ClinicService *service.ClinicService
 }
 
 func Register(app *fiber.App, deps Dependencies) {
@@ -34,4 +36,9 @@ func Register(app *fiber.App, deps Dependencies) {
 			"postgres": dbStatus,
 		})
 	})
+
+	v1 := app.Group("/api/v1")
+	if deps.ClinicService != nil {
+		RegisterClinicRoutes(v1, deps.ClinicService, deps.JWT, deps.Permissions)
+	}
 }
