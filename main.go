@@ -42,16 +42,16 @@ func main() {
 		log.Println("[INFO] Terhubung ke basis data PostgreSQL")
 	}
 
-	// 3. Setup JWT Manager & Autorisasi RBAC (Person 3)
+	// 3. Setup JWT Manager & Autorisasi RBAC
 	jwtSecret := config.GetEnv("JWT_SECRET", "supersecretjwtkey_min32characters_2026")
-	jwtIssuer := config.GetEnv("JWT_ISSUER", "siakad-mini")
+	jwtIssuer := config.GetEnv("JWT_ISSUER", "4-sehat-5-haji")
 	accessTTL := time.Duration(config.GetEnvInt("JWT_TTL_MINUTES", 60)) * time.Minute
 	jwtManager := helper.NewJWTManager(jwtSecret, jwtIssuer, accessTTL)
 
 	roleRepo := repository.NewRoleRepository(pool)
 	permMap, err := roleRepo.LoadPermissions(ctx)
-	if err != nil {
-		permMap = make(map[string][]string)
+	if err != nil || len(permMap) == 0 {
+		permMap = helper.DefaultClinicPermissions()
 	}
 	permissions := helper.NewPermissionSet(permMap)
 
@@ -75,9 +75,24 @@ func main() {
 		}
 	}()
 
-	// 7. Graceful Shutdown
+	// 7. Jalankan Asynq Background Worker (Decision #6)
+	workerServer := config.NewWorkerServer(nil)
+	logMailer := helper.NewLogMailer(nil)
+	workerMux := NewWorkerMux(logMailer)
+
+	go func() {
+		log.Println("[INFO] Asynq worker server berjalan di background...")
+		if err := workerServer.Run(workerMux); err != nil {
+			log.Printf("[INFO] Asynq worker berhenti: %v\n", err)
+		}
+	}()
+
+	// 8. Graceful Shutdown
 	<-ctx.Done()
-	log.Println("[INFO] Menerima sinyal terminasi, mematikan server secara graceful...")
+	log.Println("[INFO] Menerima sinyal terminasi, mematikan server dan worker secara graceful...")
+
+	// Matikan Asynq worker
+	workerServer.Shutdown()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -86,5 +101,5 @@ func main() {
 		log.Printf("[ERROR] Gagal mematikan server Fiber secara normal: %v\n", err)
 	}
 
-	log.Println("[INFO] Server berhasil dimatikan dengan aman")
+	log.Println("[INFO] Server dan worker berhasil dimatikan dengan aman")
 }
