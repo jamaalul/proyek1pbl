@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -17,23 +18,62 @@ type DBTX interface {
 }
 
 type TxManager struct {
-	pool *pgxpool.Pool
+	pool      *pgxpool.Pool
+	runTxOnce func(ctx context.Context, fn func(tx DBTX) error) error
 }
 
 func NewTxManager(pool *pgxpool.Pool) *TxManager {
-	return &TxManager{pool: pool}
+	m := &TxManager{pool: pool}
+	m.runTxOnce = m.runTransactionOnce
+	return m
 }
 
+// WithTx menjalankan callback dalam transaksi dengan retry hingga 3 kali
+// (backoff 50/100/200 ms) HANYA untuk error PG 40001 (serialization) dan 40P01 (deadlock).
 func (m *TxManager) WithTx(ctx context.Context, fn func(tx DBTX) error) error {
-	return m.runTransactionOnce(ctx, fn)
+	backoffs := []time.Duration{50 * time.Millisecond, 100 * time.Millisecond, 200 * time.Millisecond}
+	maxAttempts := len(backoffs) + 1
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		err := m.runTxOnce(ctx, fn)
+		if err == nil {
+			return nil
+		}
+
+		if isRetryablePgError(err) {
+			if attempt < maxAttempts {
+				select {
+				case <-time.After(backoffs[attempt-1]):
+					continue
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+		}
+
+		return err
+	}
+	return nil
 }
 
-// WithTxOnce menjalankan satu percobaan; kebijakan retry perlu disepakati tim.
+// WithTxOnce menjalankan callback transaksi tepat satu kali tanpa retry.
 func (m *TxManager) WithTxOnce(ctx context.Context, fn func(tx DBTX) error) error {
-	return m.runTransactionOnce(ctx, fn)
+	return m.runTxOnce(ctx, fn)
+}
+
+func isRetryablePgError(err error) bool {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		return pgErr.Code == "40001" || pgErr.Code == "40P01"
+	}
+	return false
 }
 
 func (m *TxManager) runTransactionOnce(ctx context.Context, fn func(tx DBTX) error) (err error) {
+	if m.pool == nil {
+		return errors.New("database pool is not initialized")
+	}
+
 	tx, err := m.pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
