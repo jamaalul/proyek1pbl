@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jamaalul/proyek1pbl/app/repository"
+	"github.com/jamaalul/proyek1pbl/app/service"
 	"github.com/jamaalul/proyek1pbl/config"
 	"github.com/jamaalul/proyek1pbl/database"
 	"github.com/jamaalul/proyek1pbl/helper"
@@ -58,11 +59,16 @@ func main() {
 	// 4. Inisialisasi Fiber App dengan Centralized Error Handler & Global Middlewares
 	app := config.NewApp()
 
+	txMgr := repository.NewTxManager(pool)
+	clinicRepo := repository.NewClinicRepository(pool)
+	clinicService := service.NewClinicService(clinicRepo, txMgr)
+
 	// 5. Daftarkan Endpoint Router
 	route.Register(app, route.Dependencies{
-		Pool:        pool,
-		JWT:         jwtManager,
-		Permissions: permissions,
+		Pool:          pool,
+		JWT:           jwtManager,
+		Permissions:   permissions,
+		ClinicService: clinicService,
 	})
 
 	// 6. Jalankan Server HTTP
